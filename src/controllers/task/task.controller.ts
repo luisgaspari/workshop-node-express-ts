@@ -2,87 +2,106 @@ import { Request, Response } from 'express'
 import Task from '../../models/task.entity'
 
 export default class TaskController {
-  static async store (req: Request, res: Response) {
-    const { title, completed } = req.body
-    const { userId } = req.headers
+    static async store(req: Request, res: Response) {
+        const { title, completed } = req.body
+        const { userId } = req.headers
 
-    if (!userId) return res.status(401).json({ error: 'Usuário não autenticado' })
+        if (!userId) return res.status(401).json({ error: 'Usuário não autenticado' })
 
-    if (!title) {
-      return res.status(400).json({ error: 'O título é obrigatório' })
+        if (!title) {
+            return res.status(400).json({ error: 'O título é obrigatório' })
+        }
+
+        const task = new Task()
+        task.title = title
+        task.completed = completed ?? false
+        task.userId = Number(userId)
+        await task.save()
+
+        return res.status(201).json(task)
     }
 
-    const task = new Task()
-    task.title = title
-    task.completed = completed ?? false
-    task.userId = Number(userId)
-    await task.save()
+    static async index(req: Request, res: Response) {
+        const { userId } = req.headers
 
-    return res.status(201).json(task)
-  }
+        if (!userId) return res.status(401).json({ error: 'Usuário não autenticado' })
 
-  static async index (req: Request, res: Response) {
-    const { userId } = req.headers
-
-    if (!userId) return res.status(401).json({ error: 'Usuário não autenticado' })
-
-    const tasks = await Task.find({where: { userId: Number(userId) }})
-    return res.json(tasks)
-  }
-
-  static async show (req: Request, res: Response) {
-    const { id } = req.params
-    const { userId } = req.headers
-
-    if(!id || isNaN(Number(id))) {
-      return res.status(400).json({ error: 'O id é obrigatório' })
+        const tasks = await Task.find({ where: { userId: Number(userId) } })
+        return res.json(tasks)
     }
 
-    if (!userId) return res.status(401).json({ error: 'Usuário não autenticado' })
+    static async show(req: Request, res: Response) {
+        const { id } = req.params // const id = req.params.id
+        const { userId } = req.headers
 
-    const task = await Task.findOneBy({id: Number(id), userId: Number(userId)})
-    return res.json(task)
-  }
+        if (!id || isNaN(Number(id))) {
+            return res.status(400).json({ error: 'O id é obrigatório' })
+        }
 
-  static async delete (req: Request, res: Response) {
-    const { id } = req.params
-    const { userId } = req.headers
+        if (!userId) return res.status(401).json({ error: 'Usuário não autenticado' })
 
-    if(!id || isNaN(Number(id))) {
-      return res.status(400).json({ error: 'O id é obrigatório' })
+        const task = await Task.findOneBy({ id: Number(id), userId: Number(userId) })
+
+        if (!task) {
+            return res.status(404).json({ error: 'Task não encontrada' })
+        }
+
+        return res.json(task)
     }
 
-    if (!userId) return res.status(401).json({ error: 'Usuário não autenticado' })
+    static async delete(req: Request, res: Response) {
+        const { id } = req.params
+        const { userId } = req.headers
 
-    const task = await Task.findOneBy({id: Number(id), userId: Number(userId)})
-    if (!task) {
-      return res.status(404).json({ error: 'Task não encontrada' })
+        if (!id || isNaN(Number(id))) {
+            return res.status(400).json({ error: 'O id é obrigatório' })
+        }
+
+        if (!userId) return res.status(401).json({ error: 'Usuário não autenticado' })
+
+        // Task.delete({ id: Number(id), userId: Number(userId) })
+
+        const task = await Task.findOneBy({ id: Number(id), userId: Number(userId) })
+
+        if (!task) {
+            return res.status(404).json({ error: 'Task não encontrada' })
+        }
+
+        await task.remove()
+        return res.status(204).send()
     }
 
-    await task.remove()
-    return res.status(204).json()
-  }
-  
-  static async update (req: Request, res: Response) {
-    const { id } = req.params
-    const { title, completed } = req.body
-    const { userId } = req.headers
+    static async update(req: Request, res: Response) {
+        const { id } = req.params
+        const { title, completed } = req.body
+        const { userId } = req.headers
 
-    if(!id || isNaN(Number(id))) {
-      return res.status(400).json({ error: 'O id é obrigatório' })
+        // if (!title) {
+        //     return res.status(400).json({ error: 'O título é obrigatório' })
+        // }
+
+        // if (completed === undefined) {
+        //     return res.status(400).json({ error: 'O completed é obrigatório' })
+        // }
+
+        if (!id || isNaN(Number(id))) {
+            return res.status(400).json({ error: 'O id é obrigatório' })
+        }
+
+        if (!userId) return res.status(401).json({ error: 'Usuário não autenticado' })
+
+        const task = await Task.findOneBy({ id: Number(id), userId: Number(userId) })
+        if (!task) {
+            return res.status(404).json({ error: 'Task não encontrada' })
+        }
+
+        // task.title = title
+        // task.completed = completed
+
+        task.title = title ?? task.title
+        task.completed = completed === undefined ? task.completed : completed
+        await task.save()
+
+        return res.json(task)
     }
-
-    if (!userId) return res.status(401).json({ error: 'Usuário não autenticado' })
-
-    const task = await Task.findOneBy({id: Number(id), userId: Number(userId)})
-    if (!task) {
-      return res.status(404).json({ error: 'Task não encontrada' })
-    }
-
-    task.title = title ?? task.title
-    task.completed = (completed === undefined) ? task.completed : completed
-    await task.save()
-
-    return res.json(task)
-  } 
 }
