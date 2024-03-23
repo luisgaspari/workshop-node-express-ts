@@ -4,21 +4,21 @@ import Task from './task.entity'
 
 @Entity()
 export default class User extends BaseEntity {
-  @PrimaryGeneratedColumn()
-  id!: number
+    @PrimaryGeneratedColumn()
+    id!: number
 
-  @Column()
-  name!: string
+    @Column()
+    name!: string
 
-  @Column()
-  email!: string
+    @Column()
+    email!: string
 
-  @Column()
-  password!: string
+    @Column() //@Column({name: 'nome_do_campo_no_banco_de_dados', nullable: true})
+    password!: string
 
-  @OneToMany(() => Token, token => token.user)
-  tokens!: Token[]  
+    @OneToMany(() => Token, (token) => token.user)
+    tokens!: Token[]
 
-  @OneToMany(() => Task, task => task.user)
-  tasks!: Task[]  
+    @OneToMany(() => Task, (task) => task.user)
+    tasks!: Task[]
 }
