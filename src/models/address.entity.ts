@@ -1,34 +1,38 @@
-import { Entity, BaseEntity, PrimaryGeneratedColumn, Column, ManyToOne } from "typeorm"
-import User from './user.entity'
+import {
+  Entity,
+  BaseEntity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+} from "typeorm";
+import User from "./user.entity";
 
 @Entity()
 export default class Address extends BaseEntity {
-    @PrimaryGeneratedColumn()
-    id!: number
+  @PrimaryGeneratedColumn()
+  id!: number;
 
-    @Column()
-    street!: string
+  @Column()
+  street!: string;
 
-    @Column()
-    number!: string
+  @Column()
+  number!: string;
 
-    @Column()
-    city!: string
+  @Column()
+  city!: string;
 
-    @Column()
-    state!: string
+  @Column()
+  state!: string;
 
-    @Column()
-    country!: string
+  @Column()
+  country!: string;
 
-    @Column()
-    zipCode!: string
+  @Column()
+  zipCode!: string;
 
-    @Column({name: 'user_id'})
-    userId!: number
+  @Column({ name: "user_id" })
+  userId!: number;
 
-    @ManyToOne(() => User, user => user.addresses)
-    user!: User
+  @ManyToOne(() => User, (user) => user.addresses)
+  user!: User;
 }
-
-
