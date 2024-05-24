@@ -30,6 +30,12 @@ export default class AuthController {
         })
     }
 
+    // Adiciona o método list ao AuthController
+    static async list(req: Request, res: Response) {
+        const users = await User.find()
+        return res.json(users)
+    }
+
     static async login(req: Request, res: Response) {
         const { email, password } = req.body
 
