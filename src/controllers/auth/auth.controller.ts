@@ -11,6 +11,10 @@ export default class AuthController {
         if (!email) return res.status(400).json({ error: 'O email é obrigatório' })
         if (!password) return res.status(400).json({ error: 'A senha é obrigatória' })
 
+        // Verifica se o email já está cadastrado
+        const userCheck = await User.findOneBy({ email })
+        if (userCheck) return res.status(400).json({ error: 'Email já cadastrado' })
+
         const user = new User()
         user.name = name
         user.email = email
@@ -22,14 +26,8 @@ export default class AuthController {
         return res.status(201).json({
             id: user.id,
             name: user.name,
-            email: user.email,
+            email: user.email
         })
-    }
-
-    // Adiciona o método list ao AuthController
-    static async list(req: Request, res: Response) {
-        const users = await User.find()
-        return res.json(users)
     }
 
     static async login(req: Request, res: Response) {
@@ -44,17 +42,13 @@ export default class AuthController {
         const passwordMatch = bcrypt.compareSync(password, user.password)
         if (!passwordMatch) return res.status(401).json({ error: 'Senha inválida' })
 
-        // Remove todos os tokens antigos do usuário - derruba outras conexões
-        await Token.delete({ user: { id: user.id } })
+        // Remove todos os tokens antigos do usuário
+        await Token.delete(
+            { user: { id: user.id } }
+        )
 
         const token = new Token()
         // Gera um token aleatório
-
-        // let numberRand = Math.random()
-        // numberRand *= user.id
-        // const stringRand = numberRand.toString(36) + new Date().getTime().toString()
-        // token.token = bcrypt.hashSync(stringRand, 1).slice(-20)
-
         token.token = bcrypt.hashSync(Math.random().toString(36), 1).slice(-20)
         // Define a data de expiração do token para 1 hora
         token.expiresAt = new Date(Date.now() + 60 * 60 * 1000)
@@ -64,10 +58,12 @@ export default class AuthController {
         token.user = user
         await token.save()
 
+        // Adiciona o token em um cookie
+        res.cookie('token', token.token, { httpOnly: true, secure: true, sameSite: 'none' }) // Aqui estamos definindo o cookie como HTTP Only, Secure e SameSite none
         return res.json({
             token: token.token,
             expiresAt: token.expiresAt,
-            refreshToken: token.refreshToken,
+            refreshToken: token.refreshToken
         })
     }
 
@@ -91,10 +87,12 @@ export default class AuthController {
         token.expiresAt = new Date(Date.now() + 60 * 60 * 1000)
         await token.save()
 
+        // Adiciona o token em um cookie
+        res.cookie('token', token.token, { httpOnly: true, secure: true, sameSite: 'none' }) // Aqui estamos definindo o cookie como HTTP Only, Secure e SameSite none
         return res.json({
             token: token.token,
             expiresAt: token.expiresAt,
-            refreshToken: token.refreshToken,
+            refreshToken: token.refreshToken
         })
     }
 
@@ -109,6 +107,9 @@ export default class AuthController {
 
         // Remove o token
         await userToken.remove()
+
+        // Remove o cookie
+        res.clearCookie('token')
 
         // Retorna uma resposta vazia
         return res.status(204).json()
